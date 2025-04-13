@@ -5,6 +5,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 
+/**
+ * A chatbot that simulates a reflective conversation with the user using mirror words.
+ * Implements the Chatbot interface and maintains a transcript of the conversation.
+ */
+
 class Conversation implements Chatbot {
 
   // Attributes 
@@ -25,24 +30,20 @@ class Conversation implements Chatbot {
   };
 
   /**
-   * Constructor 
+   * Constructs a new Conversation instance with default values and mirror words.
    */
   Conversation() {
-     transcript = new ArrayList<>();
-     random = new Random();
-     mirrorWords = new HashMap<>();
-     mirrorWords.put("I", "you");
-     mirrorWords.put("me", "you");
-     mirrorWords.put("am", "are");
-     mirrorWords.put("you", "I");
-     //mirrorWords.put("I'm", "you're");
-     //mirrorWords.put("you are", "I am");
-     //mirrorWords.put("you're", "I'm"); --> failed
-     mirrorWords.put("my", "your");
-     mirrorWords.put("your", "my");
-     mirrorWords.put("mine", "yours");
-     mirrorWords.put("we","you");
-
+    transcript = new ArrayList<>();
+    random = new Random();
+    mirrorWords = new HashMap<>();
+    mirrorWords.put("i", "you");
+    mirrorWords.put("me", "you");
+    mirrorWords.put("am", "are");
+    mirrorWords.put("you", "I");
+    mirrorWords.put("my", "your");
+    mirrorWords.put("your", "my");
+    mirrorWords.put("mine", "yours");
+    mirrorWords.put("we", "you");
   }
 
   /**
@@ -68,13 +69,11 @@ class Conversation implements Chatbot {
 
     System.out.println("See ya!");
     transcript.add("See ya!");
-
     scanner.close();
-
   }
 
   /**
-   * Prints transcript of conversation
+   * Prints transcript of conversation when terminating
    */
   public void printTranscript() {
     System.out.println("\nTRANSCRIPT:");
@@ -84,49 +83,66 @@ class Conversation implements Chatbot {
   }
 
   /**
-   * Gives appropriate response (mirrored or canned) to user input
-   * @param inputString the users last line of input
+   * Gives appropriate response (mirrored or canned) based on user's input
+   * @param inputString the user's last line of input
    * @return mirrored or canned response to user input  
    */
   public String respond(String inputString) {
-    String[] words = inputString.split(" ");
     boolean mirrored = false;
 
-    for (int i = 0; i < words.length; i++) {
-       if (mirrorWords.containsKey(words[i])) {
-          words[i] = mirrorWords.get(words[i]);
-          mirrored = true;
-        }
+    // Normalize input and strip terminal punctuation
+    inputString = inputString.trim();
+    if (inputString.endsWith(".") || inputString.endsWith("!") || inputString.endsWith("?")) {
+      inputString = inputString.substring(0, inputString.length() - 1);
     }
-    /* tried to do the hudos but failed
-      String word = words[i].toLowerCase().replaceAll("[^a-zA-Z]", ""); // Remove punctuation
-      if (mirrorWords.containsKey(word)) {
-          String replacement = mirrorWords.get(word);
-  
-          // Preserve capitalization
-          if (Character.isUpperCase(words[i].charAt(0))) {
-              replacement = Character.toUpperCase(replacement.charAt(0)) + replacement.substring(1);
-          }
-  
-          // Replace the original word with its mirrored version (but keep punctuation)
-          words[i] = words[i].replaceAll("[^a-zA-Z]", "") // Remove punctuation from the original word
-                          .replace(word, replacement); // Replace the word itself
-          mirrored = true;
-      }
-    */
 
-    if (mirrored) {
-        return String.join(" ", words) + "?";
-    } else {
-        return cannedResponses[random.nextInt(cannedResponses.length)];
+    String[] tokens = inputString.split(" ");
+    List<String> responseTokens = new ArrayList<>();
+
+    for (int i = 0; i < tokens.length; i++) {
+      String wordOnly = tokens[i].replaceAll("[^a-zA-Z']", "");
+      String punct = tokens[i].replaceAll("[a-zA-Z']", "");
+      String lowerWord = wordOnly.toLowerCase();
+
+      if (mirrorWords.containsKey(lowerWord)) {
+        String replacement = mirrorWords.get(lowerWord);
+        if (Character.isUpperCase(wordOnly.charAt(0))) {
+          replacement = Character.toUpperCase(replacement.charAt(0)) + replacement.substring(1);
+        }
+        responseTokens.add(replacement + punct);
+        mirrored = true;
+      } else if (lowerWord.equals("i'm")) {
+        responseTokens.add("you're" + punct);
+        mirrored = true;
+      } else if (lowerWord.equals("you're")) {
+        responseTokens.add("I'm" + punct);
+        mirrored = true;
+      } else {
+        responseTokens.add(wordOnly + punct);
+      }
     }
+
+    StringBuilder result = new StringBuilder();
+    for (int i = 0; i < responseTokens.size(); i++) {
+      result.append(responseTokens.get(i));
+      if (i != responseTokens.size() - 1) result.append(" ");
+    }
+
+    if (!result.isEmpty()) {
+      result.setCharAt(0, Character.toUpperCase(result.charAt(0)));
+    }
+
+    return mirrored ? result.toString() + "?" : cannedResponses[random.nextInt(cannedResponses.length)];
   }
 
+  /**
+   * Runs the program.
+   * @param arguments command-line arguments
+   */
   public static void main(String[] arguments) {
-
     Conversation myConversation = new Conversation();
     myConversation.chat();
     myConversation.printTranscript();
-
   }
+
 }
